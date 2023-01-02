@@ -1,0 +1,22 @@
+use clarity
+
+declare @target varchar(500) = 'COST_CENTER_CODE'
+	
+SELECT 
+	o.name 'ObjectName'
+	,s.name 'SchemaName'
+	,o.type_desc
+	,o.create_date
+	,o.modify_date
+	,m.definition
+FROM
+   sys.sql_modules AS m
+   INNER JOIN sys.objects AS o ON m.object_id = o.object_id
+   INNER JOIN sys.schemas AS s ON o.schema_id = s.schema_id
+WHERE 0=0
+    AND m.definition LIKE '%' + @target + '%'
+    --AND o.name LIKE '%' + @target + '%'
+ORDER BY
+	o.type_desc
+	,s.name
+	,o.name
