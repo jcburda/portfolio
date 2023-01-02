@@ -1,0 +1,81 @@
+use clarity
+
+SELECT distinct
+	pe.PAT_ENC_CSN_ID
+	,p.PAT_MRN_ID
+	,p.PAT_ID
+	,p.PAT_NAME
+	,'------------' 'ADT'
+	,ca.EVENT_ID
+	,ca.EFFECTIVE_TIME
+	,zcet.NAME 'event type'
+	,zcest.NAME 'event sub type'
+	,cd.DEPARTMENT_ID
+	,cd.DEPARTMENT_NAME
+	,cd.SERV_AREA_ID
+	,zcc.NAME 'Center'
+	,zcpc.NAME 'pat class name'
+	,zcabh.NAME 'pat base class'
+	,zcps.NAME 'pat service'
+	,ca.COMMENTS
+	,zcer.NAME 'reason'
+	,'------------' 'Contact'
+	,pe.CONTACT_DATE
+	,cd2.DEPARTMENT_ID
+	,cd2.DEPARTMENT_NAME
+	,cd2.SERV_AREA_ID
+	,zcc2.NAME 'Center'
+	,zcdet.NAME 'Enc Type'
+	,cprc.PRC_NAME 'Visit Type'
+	,cs.PROV_ID
+	,cs.PROV_NAME 'Visit Prov Name'
+	,perv.ENC_REASON_ID
+	,clr.REASON_VISIT_NAME
+	,cedx.CURRENT_ICD10_LIST
+	,cedx.DX_ID
+	,cedx.DX_NAME
+	,pe.APPT_STATUS_C
+	,zcas.NAME 'Cancellation Reason'
+	,'------------' 'Orders'
+	--,op.ORDER_PROC_ID
+	,op.PROC_ID
+	,op.PROC_CODE
+	,op.DESCRIPTION
+	--,om.ORDER_MED_ID
+	,om.MEDICATION_ID
+	,om.DISPLAY_NAME
+FROM PAT_ENC pe
+LEFT JOIN CLARITY_ADT ca ON ca.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID
+LEFT JOIN PATIENT p ON p.PAT_ID = pe.PAT_ID
+LEFT JOIN CLARITY_DEP cd ON cd.DEPARTMENT_ID = ca.DEPARTMENT_ID
+LEFT JOIN CLARITY_DEP cd2 ON cd2.DEPARTMENT_ID = pe.DEPARTMENT_ID
+LEFT JOIN CLARITY_PRC cprc ON pe.APPT_PRC_ID = cprc.PRC_ID
+LEFT JOIN CLARITY_SER cs ON pe.VISIT_PROV_ID = cs.PROV_ID
+LEFT JOIN CLARITY_SER_SPEC css ON cs.PROV_ID = css.PROV_ID
+LEFT JOIN PAT_ENC_RSN_VISIT perv ON perv.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID and perv.LINE = 1
+LEFT JOIN CL_RSN_FOR_VISIT clr ON clr.REASON_VISIT_ID = perv.ENC_REASON_ID
+LEFT JOIN PAT_ENC_DX pedx ON pedx.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID and pedx.LINE = 1
+LEFT JOIN CLARITY_EDG cedx ON cedx.DX_ID = pedx.DX_ID
+left join ORDER_PROC op ON op.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID
+left join ORDER_MED om ON om.PAT_ENC_CSN_ID = pe.PAT_ENC_CSN_ID
+------------------------------------------------------------------------
+LEFT JOIN ZC_DISP_ENC_TYPE zcdet ON zcdet.DISP_ENC_TYPE_C = pe.ENC_TYPE_C
+LEFT JOIN ZC_CENTER zcc ON zcc.CENTER_C = cd.CENTER_C 
+LEFT JOIN ZC_CENTER zcc2 ON zcc2.CENTER_C = cd2.CENTER_C
+LEFT JOIN ZC_SPECIALTY zcs ON zcs.SPECIALTY_C = css.SPECIALTY_C
+LEFT JOIN ZC_EVENT_TYPE zcet ON zcet.EVENT_TYPE_C = ca.EVENT_TYPE_C
+LEFT JOIN ZC_EVENT_SUBTYPE zcest ON zcest.EVENT_SUBTYPE_C = ca.EVENT_SUBTYPE_C
+LEFT JOIN ZC_PAT_CLASS zcpc ON zcpc.ADT_PAT_CLASS_C = ca.PAT_CLASS_C
+LEFT JOIN ZC_PAT_SERVICE zcps ON zcps.HOSP_SERV_C = ca.PAT_SERVICE_C
+LEFT JOIN ZC_EVENT_REASON zcer ON zcer.REASON_C = ca.REASON_C
+LEFT JOIN ZC_ACCT_BASECLS_HA zcabh ON zcabh.ACCT_BASECLS_HA_C = ca.BASE_PAT_CLASS_C
+LEFT JOIN ZC_CANCEL_REASON zccr ON zccr.CANCEL_REASON_C = pe.CANCEL_REASON_C
+LEFT JOIN ZC_APPT_STATUS zcas ON zcas.APPT_STATUS_C = pe.APPT_STATUS_C
+------------------------
+WHERE 1=1
+	AND pe.PAT_ENC_CSN_ID = ''
+	--and pe.CONTACT_DATE = '1/1/22'
+	--AND ca.EVENT_SUBTYPE_C <> 2
+	--AND pe.APPT_STATUS_C IN (2, 6) -- arrived, completed
+ORDER BY pe.PAT_ENC_CSN_ID
+	,ca.effective_time
