@@ -1,0 +1,52 @@
+use clarity
+    
+; with cte as (  
+SELECT
+	tab.TABLE_NAME
+	,tab.TABLE_INTRODUCTION 'Table_Description'
+	,col.COLUMN_NAME
+	,TRIM(STUFF((
+			SELECT ', ' + z.COLUMN_INI + ' ' + FORMAT(z.COLUMN_ITEM,'0.#')
+			FROM CLARITY_COL_INIITM z
+			WHERE z.COLUMN_ID = coli.COLUMN_ID
+			ORDER BY z.LINE
+			FOR XML PATH('')
+			), 1, 1, '')) 'INI_ItemNumber'
+	,coli.COLUMN_INI
+	,convert(float, coli.COLUMN_ITEM) 'COLUMN_ITEM'
+	,col.DESCRIPTION 'Column_Description'
+	,prop.PROPERTY_ID 'CSQL PROPERTY_ID'
+	,prop.PROPERTY_NAME 'CSQL PROPERTY_NAME'
+	,prop.PROP_DESC 'CSQL PROP_DESC'
+	,col.DATA_TYPE
+	,col.CLARITY_PRECISION
+	,col.RELEASED_VERSION_C
+	,col.IS_EXTRACTED_YN
+	,col.LAST_MODIFIED_BY_EPIC_DTTM
+	,col.COL_DESCRIPTOR_OVR
+	,row_number() over(partition by tab.TABLE_NAME, col.COLUMN_NAME ORDER BY tab.TABLE_NAME, col.COLUMN_NAME, col.COL_DESCRIPTOR_OVR desc, convert(float, coli.COLUMN_ITEM)) 'rn'
+FROM CLARITY_COL col
+LEFT JOIN CLARITY_COL_INIITM coli ON col.COLUMN_ID = coli.COLUMN_ID
+LEFT JOIN CLARITY_TBL tab ON tab.TABLE_ID = col.TABLE_ID
+LEFT JOIN CL_RBPROP prop ON prop.MASTER_FILE = coli.COLUMN_INI and prop.PROP_LOOKUP_ITEM = coli.COLUMN_ITEM
+WHERE 1 = 1
+	--AND col.DEPRECATED_YN IS NULL
+	--AND col.LAST_MODIFIED_BY_EPIC_DTTM IS NOT NULL
+	------------------------------------------------------------------
+	-- Get Column by Name, Description, or INI + Item Number
+	------------------------------------------------------------------
+	--AND tab.TABLE_NAME LIKE 'HSP_ACCOUNT_2'
+	--AND col.COLUMN_NAME LIKE 'SPECIALTY_C'
+	--AND col.DESCRIPTION like '%ventilator%'
+	------------------------
+	--AND coli.COLUMN_INI LIKE 'HAR'
+	--AND FORMAT(coli.COLUMN_ITEM,'0.#') LIKE '1995'
+	------------------------------------------------------------------
+)
+select * from cte a
+where 0=0
+	AND a.rn = 1
+order by
+	a.TABLE_NAME
+	,a.COLUMN_NAME
+	--,'COLUMN_ITEM'
