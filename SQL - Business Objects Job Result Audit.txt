@@ -1,0 +1,24 @@
+Use BOE4audit
+
+select DISTINCT
+	ae.Event_ID
+	,ae.Object_Name
+	,DATEADD(HOUR, -5, ae.Start_Time) 'Local Start Time'
+	,DATEADD(MILLISECOND, Duration_ms, DATEADD(HOUR, -5, ae.Start_Time)) 'Local End Time'
+	,convert(varchar,dateadd(ms,ae.Duration_ms,0),108) 'Duration'
+	,ae.User_Name
+	,zc_status.Status_Name
+	,zc_type.Event_Type_Name
+	,zc_server.Server_Name
+from ADS_EVENT ae
+LEFT JOIN ADS_SERVER_NAME_STR zc_server ON ae.Server_ID = zc_server.Server_ID
+LEFT JOIN ADS_STATUS_STR zc_status ON ae.Status_ID = zc_status.Status_ID
+LEFT JOIN ADS_EVENT_TYPE_STR zc_type ON zc_type.Event_Type_ID = ae.Event_Type_ID
+WHERE 0=0
+	AND ae.Object_Name = ''
+	AND zc_status.Language = 'EN'
+	AND zc_server.Language = 'EN'
+	AND zc_type.Language = 'EN'
+	AND zc_status.Status_Name IN ('Job Succeeded', 'Job Failed')
+	AND zc_type.Event_Type_Name = 'Run'
+ORDER BY DATEADD(HOUR, -5, ae.Start_Time) DESC
